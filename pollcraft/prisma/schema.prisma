@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Poll {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  type        PollType
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+  questions   Question[]
+  responses   Response[]
+}
+
+model Question {
+  id       String   @id @default(cuid())
+  pollId   String
+  poll     Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text     String
+  order    Int
+  options  Option[]
+  answers  Answer[]
+}
+
+model Option {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  order      Int
+  answers    Answer[]
+}
+
+model Response {
+  id        String   @id @default(cuid())
+  pollId    String
+  poll      Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  ipAddress String
+  createdAt DateTime @default(now())
+  answers   Answer[]
+
+  @@unique([pollId, ipAddress])
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  responseId String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id])
+  optionId   String
+  option     Option   @relation(fields: [optionId], references: [id])
+}
+
+enum PollType {
+  POLL
+  SURVEY
+}
